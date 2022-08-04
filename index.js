@@ -8,7 +8,7 @@ function initMap() {
       center: Cordoba,
     });
 
-    map.data.addGeoJson("barrios2.geojson");
+    map.data.loadGeoJson("https://github.com/g-camila/ZonaRoja/blob/798b243130a6015b8993d6d074413feeda981419/barrios2.json");
   }
   
   window.initMap = initMap;
