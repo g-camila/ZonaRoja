@@ -1,9 +1,5 @@
 <!DOCTYPE html>
-<!--
- @license
- Copyright 2019 Google LLC. All Rights Reserved.
- SPDX-License-Identifier: Apache-2.0
--->
+
 <html>
   <head>
     <title>Add Map</title>
@@ -11,18 +7,13 @@
 
     <link rel="stylesheet" type="text/css" href="C:\ZonaRoja\ZonaRoja\style.css" />
     <script src="C:\ZonaRoja\ZonaRoja\index.js"></script>
+    <script src="C:\ZonaRoja\ZonaRoja\barrios\barrios2.geojson"></script>
   </head>
   <body>
     <h3>My Google Maps Demo</h3>
-    <!--The div element for the map -->
-    <div id="map"></div>
 
-    <!-- 
-     The `defer` attribute causes the callback to execute after the full HTML
-     document has been parsed. For non-blocking uses, avoiding race conditions,
-     and consistent behavior across browsers, consider loading using Promises
-     with https://www.npmjs.com/package/@googlemaps/js-api-loader.
-    -->
+    <div id="map"></div>
+    
     <script
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBT2oq_khguBFdxJfECeLT4ScJRDTa4fQo&callback=initMap&v=weekly"
       defer
