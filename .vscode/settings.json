@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "PROYECTO3.C": "cpp",
+        "1.C": "cpp",
+        "entrada_salida.C": "cpp",
+        "stdio.h": "c",
+        "countm": "c"
+    },
+    "python.analysis.typeCheckingMode": "off"
+}

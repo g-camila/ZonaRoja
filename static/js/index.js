@@ -1,8 +1,8 @@
 let map;
-markerArr = [];
+//markerArr = [];
 
 //The buttons to display the layers
-function LayerControl(controlDiv, map, barrios, markerArr) {
+function LayerControl(controlDiv, map, barrios, marker) {
 
   const controlUI = document.createElement("div");
   controlUI.type = "form";
@@ -34,9 +34,7 @@ function LayerControl(controlDiv, map, barrios, markerArr) {
 
   controlText1.onchange = function() {
     if (this.checked) {
-      for (let i = 0; i < markerArr.length; i++) {
-        markerArr[i].setMap(map); 
-        }
+      marker.setMap(map);
       barrios.setMap(null);
       }
   };
@@ -54,9 +52,7 @@ function LayerControl(controlDiv, map, barrios, markerArr) {
 
   controlText2.onchange = function() {
     if (this.checked) {
-      for (let j = 0; j < markerArr.length; j++) {
-        markerArr[j].setMap(null);
-        }
+        marker.setMap(null);
         barrios.setMap(map);
     }
   };
@@ -72,16 +68,37 @@ function initMap() {
       zoom: 12,
       center: Cordoba,
     });
+    //const geocoder = new google.maps.Geocoder();
 
     //show the neighbourhoods
-    var barrios = new google.maps.Data ()
+    var barrios = new google.maps.Data()
     barrios.loadGeoJson("barrios/barrios_id.json");
-    barrios.setStyle({
-      fillColor:'green',
-      strokeColor: 'green',
-      strokeWeight: 1
+    console.log(barrios);
+    barrios.setStyle(function(feature){
+      return{
+      //choose color according to id
+        fillColor: getColor(feature.getProperty('id')),
+        fillOpacity: 0.7,
+        strokeColor: getColor(feature.getProperty('id')),
+        strokeWeight: 1,
+      }
     });
     barrios.setMap(map);
+
+    barrios.addListener("click", function(e) {
+      alert(e.feature.getProperty("Name"));
+    });
+    //set style when mouse hovers on neighbourhood
+    barrios.addListener('mouseover', function(e) {
+      barrios.overrideStyle(e.feature, {
+        strokeColor: 'white',
+        strokeWeight: 2,
+        zIndex: 2
+      });
+    });
+    barrios.addListener('mouseout', function(e) {
+      barrios.revertStyle();
+    });
 
     //initalize new marker
     let marker = new google.maps.Marker({
@@ -104,6 +121,7 @@ function initMap() {
 
     //add events for clicks in map, such as
     //changing position of marker, and showing infowindow
+    var b_contains = false;
     google.maps.event.addListener(map, 'click', function(event){
       if (document.getElementById("markerLayer").checked) {
 
@@ -112,9 +130,9 @@ function initMap() {
         });
 
         //document.getElementById("map").style.cursor = "crosshair";
-
+        position = event.latLng
         marker.setMap(map);
-        marker.setPosition(event.latLng);
+        marker.setPosition(position);
 
         marker.addListener("click", () => {
           infowindow.open({
@@ -125,15 +143,57 @@ function initMap() {
         });
 
         infowindow.open(map, marker);
-        markerArr.push(marker);
+        document.getElementById("coordenadas").value = position;
+
+        //console.log("antes")
+        b_contains = false;
+        barrios.forEach(function(feature) {
+          //console.log("antes de if")
+          if (feature.getGeometry().getType() == "MultiPolygon") {
+            // simplifying assumption, depends on data
+            // just check first linear ring
+            //console.log(feature.getGeometry().getArray()[0].getAt(0).getArray())
+            var poly = new google.maps.Polygon({
+              paths: feature.getGeometry().getArray()[0].getAt(0).getArray()
+              //path: feature.getGeometry().getAt(0).getArray()
+            });
+            b_contains = b_contains || google.maps.geometry.poly.containsLocation(marker.getPosition(),poly)
+            if (google.maps.geometry.poly.containsLocation(marker.getPosition(),poly)) {
+              // if inside polygon, create an infowindow with some information from the GeoJson
+              document.getElementById("barrio").value = feature.getProperty("Name");
+              document.getElementById("barrio_id").value = feature.getProperty("id");
+            }
+          }
+        })
+        if (!(b_contains)){
+          document.getElementById("barrio").value = "";
+          document.getElementById("barrio_id").value = "";
+        }
+        
       }
     });
 
 
   const LayerControlDiv = document.createElement("div");
-  LayerControl(LayerControlDiv, map, barrios, markerArr);
+  LayerControl(LayerControlDiv, map, barrios, marker);
   map.controls[google.maps.ControlPosition.LEFT_TOP].push(LayerControlDiv);
-};
 
+
+  //decide color
+  function getColor(id){
+    var colors = [
+      '#d7191c',
+      '#fdae61',
+      '#ffffbf',
+      '#a6d96a',
+      '#1a9641'];
+  
+    return id >= 400 ? colors[4] :
+        id > 300 ? colors[3] :
+        id > 200 ? colors[2] :
+        id > 100 ? colors[1] :
+        colors[0];
+  };
+};
 
 window.initMap = initMap;
