@@ -33,7 +33,7 @@ def after_request(response):
 
 @app.route("/", methods=["GET", "POST"])
 def map_2():
-    big_query = "SELECT * FROM delitos"
+    big_query = "SELECT * FROM casos"
     casos = pd.read_sql(big_query, engine)
 
     d_query = "SELECT * FROM delitos"
@@ -42,25 +42,21 @@ def map_2():
     p_query = "SELECT * FROM periodo"
     periodo = pd.read_sql(p_query, engine)
 
+    xx="select id_barrio,sum(1) as riesgo from casos group by id_barrio"
+    riesgo=pd.read_sql(xx, engine)
+
     #Request.
     if request.method == "POST":
-        if not request.form.get("masc"):
-            sex = request.form.get("fem")
-        else:
-            sex = request.form.get("masc")
-            fecha = request.form.get("start")
-            crimen = request.form.get("crimen")
-            tiempo = request.form.get("horario")
-            loc = request.form.get("coordenadas")
-            idbarr = request.form.get("barrio_id")
+        sex=request.form.get("sexo")
+        fecha=request.form.get("dia")
+        crimen=request.form.get("crimen")
+        tiempo=request.form.get("horario")
+        loc=request.form.get("coordenadas")
+        idbarr=request.form.get("barrio_id")
 
-        ##, el barrio en el que se selecciona, y las coordenadas actuales
-        ##AGREGAR BARRIO AL FORM Y AUTORELLENAR SU VALOR, USAR LA IDE DE GOOGLE
-        ##AGREGAR COORDENADAS AL FORM Y AUTORELLENAR SU VALOR USANDO LAS COORDENADAS ACTUALES QUE YA SABE MI JAVASCRIPT
-
-
-        insertar = "INSERT INTO casos (fecha, sexo, periodo_id, delito_id, lugar, id_barrio) VALUES ('{}', '{}','{}', '{}','{}', '{}')".format(fecha, sex, tiempo, crimen, loc, idbarr)
+        insertar = "INSERT INTO casos (lugar, fecha, periodo_id, delito_id, sexo, id_barrio) VALUES ('{}', '{}','{}', '{}','{}', '{}')".format(loc, fecha, tiempo, crimen, sex, idbarr)
         engine.execute(insertar)
+
 
         q = "SELECT * FROM casos"
         datos = pd.read_sql(q, engine)
@@ -69,4 +65,29 @@ def map_2():
         print(jdatos)
 
 
-    return render_template("map_2.html", casos=casos, delitos=delitos, periodo=periodo)
+        
+    return render_template("map_2.html", casos=casos, delitos=delitos, periodo=periodo, reisgo=riesgo)
+
+#@app.route("/insert_sql", methods=["GET", "POST"])
+#def insert_sql():
+    #Request.
+    #if request.method == "POST":
+    #sex=request.args.get("sexo")
+    #fecha=request.args.get("dia")
+    #crimen=request.args.get("crimen")
+    #tiempo=request.args.get("horario")
+    #loc=request.args.get("coordenadas")
+    #idbarr=request.args.get("barrio_id")
+
+    #insertar = "INSERT INTO casos (lugar, fecha, periodo_id, delito_id, sexo, id_barrio) VALUES ('{}', '{}','{}', '{}','{}', '{}')".format(loc, fecha, tiempo, crimen, sex, idbarr)
+    #engine.execute(insertar)
+
+
+    #q = "SELECT * FROM casos"
+    #datos = pd.read_sql(q, engine)
+
+    #jdatos=datos.to_json()
+    #print(jdatos)
+
+    #return render_template("map_2.html")
+

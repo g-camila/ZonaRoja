@@ -72,7 +72,7 @@ function initMap() {
 
     //show the neighbourhoods
     var barrios = new google.maps.Data()
-    barrios.loadGeoJson("barrios/barrios_id.json");
+    barrios.loadGeoJson("static/js/barrios_id.json");
     console.log(barrios);
     barrios.setStyle(function(feature){
       return{
