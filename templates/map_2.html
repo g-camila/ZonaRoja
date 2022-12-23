@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 
 <html>
-  <head>
-    <title>Map</title>
+  {%block header%}
+    <title>{% block title %}Zona Roja{% endblock %}</title>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}" />
     <meta charset="utf-8">
@@ -10,8 +10,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
     <script src="{{ url_for('static', filename='js/index.js') }}"></script>
     <script src="{{ url_for('static', filename='js/barrios_id.json') }}"></script>
-  </head>
-  <body>
+  {%endblock%}
+  {%block content%}
     <h3>My Google Maps Demo</h3>
         <div id="map"></div>
 
@@ -34,11 +34,11 @@
 
             <select class="form-select" aria-label="Default select example" id="crimen" name="crimen" required>
               <option selected>Crimen</option>
-              <option value="1">Asalto</option>
-              <option value="2">Robo/daño a vehículo</option>
-              <option value="3">Acoso sexual</option>
-              <option value="4">Secuestro/intento de secuestro</option>
-              <option value="5">Violación/intento de violación</option>
+              <option value="{{delitos.id[0]}}">{{delitos.nombre[0]}}</option>
+              <option value="{{delitos.id[1]}}">{{delitos.nombre[1]}}</option>
+              <option value="{{delitos.id[3]}}">{{delitos.nombre[2]}}</option>
+              <option value="{{delitos.id[4]}}">{{delitos.nombre[3]}}</option>
+              <option value="{{delitos.id[5]}}">{{delitos.nombre[4]}}</option>
             </select>
 
             <label for="start">Fecha:  </label>  
@@ -46,11 +46,11 @@
 
             <select class="form-select" aria-label="Default select example" id="horario" name="horario" required>
               <option selected>Horario</option>
-              <option value="1">Madrugada  1 a 6 hs</option>
-              <option value="2">Mañana  6 a 12 hs</option>
-              <option value="3">Mediodía  12 a 14 hs</option>
-              <option value="4">Tarde  14 a 20 hs</option>
-              <option value="5">Noche  20 a 1 hs</option>
+              <option value="{{periodo.id[0]}}">{{periodo.nombre[0]}}</option>
+              <option value="{{periodo.id[1]}}">{{periodo.nombre[1]}}</option>
+              <option value="{{periodo.id[2]}}">{{periodo.nombre[2]}}</option>
+              <option value="{{periodo.id[3]}}">{{periodo.nombre[3]}}</option>
+              <option value="{{periodo.id[4]}}">{{periodo.nombre[4]}}</option>
             </select>
 
             <div>
@@ -73,10 +73,9 @@
       </div>
     </div>
     
-    <script
+    <script async
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBT2oq_khguBFdxJfECeLT4ScJRDTa4fQo&callback=initMap&v=weekly&libraries=geometry"
-      defer
     ></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>
-  </body>
+  {%endblock%}
 </html>
