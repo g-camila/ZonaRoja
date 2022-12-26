@@ -42,7 +42,7 @@ def map_2():
     p_query = "SELECT * FROM periodo"
     periodo = pd.read_sql(p_query, engine)
 
-    xx="select id_barrio,sum(1) as riesgo from casos group by id_barrio"
+    xx = "SELECT id_barrio, SUM(1) AS riesgo FROM casos GROUP BY id_barrio"
     riesgo=pd.read_sql(xx, engine)
 
     #Request.
@@ -58,15 +58,11 @@ def map_2():
         engine.execute(insertar)
 
 
-        q = "SELECT * FROM casos"
-        datos = pd.read_sql(q, engine)
-
-        jdatos=datos.to_json()
-        print(jdatos)
-
-
-        
-    return render_template("map_2.html", casos=casos, delitos=delitos, periodo=periodo, reisgo=riesgo)
+    jriesgo = riesgo.to_json(orient = "records")
+    
+    print(jriesgo)
+    return render_template("map_2.html", casos=casos, delitos=delitos, periodo=periodo, riesgo=jriesgo)
+    #return redirect(request.referrer)
 
 #@app.route("/insert_sql", methods=["GET", "POST"])
 #def insert_sql():
