@@ -12,7 +12,7 @@ serverdb = 'eikonweb.eastus.cloudapp.azure.com'
 database = 'registros' 
 username = 'sa' 
 password = 'Dycsa0000' 
-cnxn= urllib.parse.quote_plus('DRIVER={SQL Server};SERVER='+serverdb+';DATABASE='+database+';UID='+username+';PWD='+ password)
+cnxn= urllib.parse.quote_plus('DRIVER={ODBC Driver 17 for SQL Server};SERVER='+serverdb+';DATABASE='+database+';UID='+username+';PWD='+ password)
 engine = sqla.create_engine('mssql+pyodbc:///?odbc_connect={}'.format(cnxn))
 
 app = Flask(__name__)
@@ -59,10 +59,22 @@ def map_2():
 
 
     jriesgo = riesgo.to_json(orient = "records")
-    
-    print(jriesgo)
-    return render_template("map_2.html", casos=casos, delitos=delitos, periodo=periodo, riesgo=jriesgo)
+    ammount = casos.shape[0]
+
+    yy = 'SELECT \
+    casos.id AS casos_id, periodo.nombre AS periodo_nombre, delitos.nombre AS delitos_nombre \
+    FROM casos JOIN periodo ON casos.periodo_id=periodo.id \
+    JOIN delitos ON casos.delito_id=delitos.id \
+    ORDER BY casos.fecha'
+    joined_tables=pd.read_sql(yy, engine)
+
+
+    return render_template("map_2.html", casos=casos, delitos=delitos, periodo=periodo, riesgo=jriesgo, am_casos=ammount, joined_t=joined_tables)
     #return redirect(request.referrer)
+if __name__=="__main__":
+    #from waitress import serve
+    #serve(app, host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=5000)
 
 #@app.route("/insert_sql", methods=["GET", "POST"])
 #def insert_sql():

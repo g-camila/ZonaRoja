@@ -32,7 +32,7 @@
             </div>
 
             <select class="form-select" aria-label="Default select example" id="crimen" name="crimen" required>
-              <option selected>Crimen</option>
+              <option selected>Crime that ocurred </option>
               <option value="{{delitos.id[0]}}">{{delitos.nombre[0]}}</option>
               <option value="{{delitos.id[1]}}">{{delitos.nombre[1]}}</option>
               <option value="{{delitos.id[3]}}">{{delitos.nombre[2]}}</option>
@@ -40,11 +40,11 @@
               <option value="{{delitos.id[5]}}">{{delitos.nombre[4]}}</option>
             </select>
 
-            <label for="start">Fecha:  </label>  
+            <label for="start">Date </label>  
             <input type="date" id="start" name="dia" min="2017-01-01" required>
 
             <select class="form-select" aria-label="Default select example" id="horario" name="horario" required>
-              <option selected>Horario</option>
+              <option selected>Time </option>
               <option value="{{periodo.id[0]}}">{{periodo.nombre[0]}}</option>
               <option value="{{periodo.id[1]}}">{{periodo.nombre[1]}}</option>
               <option value="{{periodo.id[2]}}">{{periodo.nombre[2]}}</option>
@@ -53,12 +53,12 @@
             </select>
 
             <div>
-              <label for="coordenadas">Coordenadas: </label>
+              <label for="coordenadas">Coordinates: </label>
               <Input type="text" id="coordenadas"name="coordenadas" readonly>
             </div>
 
             <div>
-              <label for="barrio">Barrio: </label>
+              <label for="barrio">Neighborhood: </label>
               <input type="text" id="barrio" name="barrio" readonly>
             </div>
 
@@ -87,10 +87,72 @@
 {%block javascript%}
   <script type="text/javascript">
     let map;
-    //markerArr = [];
+    let am_casos = '{{am_casos}}';
+
+    //agregar los markers de los casos ya registrados en markerArr[]
+    function casos_marks(map){
+      var i;
+      let markerArr = [];
+      let latLngArr = [];
+      var ainfowindow = new google.maps.InfoWindow;
+      var input, lat, lng, parsedPosition, icon;
+
+      //loop en jinja para poder referenciar su index
+      '{% for i in range(am_casos) %}'
+      loc_string1 = '{{casos.lugar[loop.index]}}';
+      loc_string = loc_string1.substring(1, loc_string1.length-1);
+      latlngStr = loc_string.split(",", 2);
+      lat = parseFloat(latlngStr[0]);
+      lng = parseFloat(latlngStr[1]);
+      latLngArr[i] = new google.maps.LatLng(lat, lng);
+
+      //icono_barrio = "https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png";
+      amarker = new google.maps.Marker({
+          position: latLngArr[i],
+          map:map,
+          icon:{                             
+            url: "http://maps.google.com/mapfiles/ms/micons/red-pushpin.png"}
+          });    
+      amarker.setVisible(false);
+
+      if ('{{casos.sexo[loop.index]}}' == 1){
+        sex = 'male';
+      }
+      else if ('{{casos.sexo[loop.index]}}' == 0){
+        sex = 'female';
+      }
+
+      google.maps.event.addListener(amarker, 'click', (function(amarker, i) {
+         return function() {
+             ainfowindow.setContent(     
+              '<div id="content">' +
+              '<div id="siteNotice">' +
+              "</div>" +
+              '<div id="bodyContent">' +
+              "<p> Date: {{casos.fecha[loop.index]}} </p>" +
+              "<p> Time: {{joined_t.periodo_nombre[loop.index]}} </p>" +
+              "<p> Crime: {{joined_t.delitos_nombre[loop.index]}}</p>" +
+              "<p> Sex of the victim: " + sex + "</p>" +
+              "</div>" +
+              "</div>");
+             ainfowindow.open(map, amarker);
+             
+         }
+      })(amarker, i));
+
+      markerArr.push(amarker);
+      
+      '{% endfor %}'
+
+      return {
+        markers:markerArr,
+        window:ainfowindow
+      }
+    };
+    
     
     //The buttons to display the layers
-    function LayerControl(controlDiv, map, barrios, marker) {
+    function LayerControl(controlDiv, map, barrios, marker, markerArr, ainfowindow, binfoWindow) {
     
       const controlUI = document.createElement("div");
       controlUI.type = "form";
@@ -123,8 +185,13 @@
       controlText1.onchange = function() {
         if (this.checked) {
           marker.setMap(map);
+          binfoWindow.close();
           barrios.setMap(null);
+          for (var j = 0; j < am_casos; j++){
+            markerArr[j].setVisible(true);
           }
+          ainfowindow.open(map);
+        }
       };
     
       const controlText2 = document.createElement("input");
@@ -135,13 +202,18 @@
     
       const label2 = document.createElement("label");
       label2.setAttribute("for", "radio");
-      label2.innerHTML = "See map";
+      label2.innerHTML = "See neighbourhood map";
       controlUI.appendChild(label2);
     
       controlText2.onchange = function() {
         if (this.checked) {
             marker.setMap(null);
             barrios.setMap(map);
+            binfoWindow.open(map);
+            ainfowindow.close();
+            for (var j = 0; j < am_casos; j++){
+              markerArr[j].setVisible(false);
+          }
         }
       };
     };
@@ -157,14 +229,6 @@
           zoom: 12,
           center: Cordoba,
         });
-        //const geocoder = new google.maps.Geocoder();  
-        /*var barr_riesgo = [];
-        var contador = 0;
-        {% for barr in riesgo %}
-          barr_riesgo[contador][0] = {{barr.id_barrio}};
-          barr_riesgo[contador][1] = {{barr.riesgo}};
-          contador += 1;
-        {% endfor %}*/
 
         var barrios = new google.maps.Data()
         barrios.loadGeoJson("static/js/barrios_id.json");
@@ -179,10 +243,24 @@
           }
         });
         barrios.setMap(map);
-    
+
+        binfoWindow = new google.maps.InfoWindow();
+
+        //hacer forma de comparar y buscar el riesgo
         barrios.addListener("click", function(e) {
-          alert(e.feature.getProperty("Name"));
+          binfoWindow.setContent(
+            '<div id="content">' +
+              '<div id="siteNotice">' +
+              '</div>' +
+              '<div id="bodyContent">' +
+                '<p> Neighborhood: ' + e.feature.getProperty("Name") + '</p>' +
+                '<p> Crimes registered:  '+ getRisk(e.feature.getProperty('id')) +'</p>' +
+              '</div>' +
+            '</div>');
+          binfoWindow.setPosition(e.latLng);
+          binfoWindow.open(map);
         });
+
         //set style when mouse hovers on neighbourhood
         barrios.addListener('mouseover', function(e) {
           barrios.overrideStyle(e.feature, {
@@ -240,10 +318,8 @@
             infowindow.open(map, marker);
             document.getElementById("coordenadas").value = position;
     
-            //console.log("antes")
             b_contains = false;
             barrios.forEach(function(feature) {
-              //console.log("antes de if")
               if (feature.getGeometry().getType() == "MultiPolygon") {
                 // simplifying assumption, depends on data
                 // just check first linear ring
@@ -268,11 +344,12 @@
           }
         });
     
-    
+      object = casos_marks(map);
       const LayerControlDiv = document.createElement("div");
-      LayerControl(LayerControlDiv, map, barrios, marker);
+      LayerControl(LayerControlDiv, map, barrios, marker, object.markers, object.window, binfoWindow);
       map.controls[google.maps.ControlPosition.LEFT_TOP].push(LayerControlDiv);
-    
+
+      
     
       //decide color
       function getColor(id){
@@ -283,9 +360,9 @@
           '#a6d96a',
           '#1a9641'];
       
-        return id > 3 ? colors[0] :
+        return id > 4 ? colors[0] :
             id > 2 ? colors[1] :
-            id > 1 ? colors[2] :
+            id > 0 ? colors[2] :
             id > 0 ? colors[3] :
             colors[4];
       };
@@ -299,6 +376,7 @@
         }
         return 0;
       }
+
 
     };
     
