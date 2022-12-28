@@ -64,8 +64,7 @@ def map_2():
     yy = 'SELECT \
     casos.id AS casos_id, periodo.nombre AS periodo_nombre, delitos.nombre AS delitos_nombre \
     FROM casos JOIN periodo ON casos.periodo_id=periodo.id \
-    JOIN delitos ON casos.delito_id=delitos.id \
-    ORDER BY casos.fecha'
+    JOIN delitos ON casos.delito_id=delitos.id'
     joined_tables=pd.read_sql(yy, engine)
 
 
