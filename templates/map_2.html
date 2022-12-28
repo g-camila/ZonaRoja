@@ -16,7 +16,7 @@
 
     <div class="offcanvas offcanvas-end" data-bs-backdrop="static" tabindex="-1" id="staticBackdrop" aria-labelledby="staticBackdropLabel">
       <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="staticBackdropLabel">Registre el crimen</h5>
+        <h5 class="offcanvas-title" id="staticBackdropLabel">Registre the crime</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
       </div>
       <div class="offcanvas-body">
@@ -32,19 +32,19 @@
             </div>
 
             <select class="form-select" aria-label="Default select example" id="crimen" name="crimen" required>
-              <option selected>Crime that ocurred </option>
+              <option selected value="">Crime that ocurred </option>
               <option value="{{delitos.id[0]}}">{{delitos.nombre[0]}}</option>
               <option value="{{delitos.id[1]}}">{{delitos.nombre[1]}}</option>
-              <option value="{{delitos.id[3]}}">{{delitos.nombre[2]}}</option>
-              <option value="{{delitos.id[4]}}">{{delitos.nombre[3]}}</option>
-              <option value="{{delitos.id[5]}}">{{delitos.nombre[4]}}</option>
+              <option value="{{delitos.id[2]}}">{{delitos.nombre[2]}}</option>
+              <option value="{{delitos.id[3]}}">{{delitos.nombre[3]}}</option>
+              <option value="{{delitos.id[4]}}">{{delitos.nombre[4]}}</option>
             </select>
 
             <label for="start">Date </label>  
             <input type="date" id="start" name="dia" min="2017-01-01" required>
 
             <select class="form-select" aria-label="Default select example" id="horario" name="horario" required>
-              <option selected>Time </option>
+              <option selected value="">Time </option>
               <option value="{{periodo.id[0]}}">{{periodo.nombre[0]}}</option>
               <option value="{{periodo.id[1]}}">{{periodo.nombre[1]}}</option>
               <option value="{{periodo.id[2]}}">{{periodo.nombre[2]}}</option>
@@ -99,14 +99,14 @@
 
       //loop en jinja para poder referenciar su index
       '{% for i in range(am_casos) %}'
-      loc_string1 = '{{casos.lugar[loop.index]}}';
+      loc_string1 = '{{casos.lugar[loop.index - 1]}}';
       loc_string = loc_string1.substring(1, loc_string1.length-1);
       latlngStr = loc_string.split(",", 2);
       lat = parseFloat(latlngStr[0]);
       lng = parseFloat(latlngStr[1]);
       latLngArr[i] = new google.maps.LatLng(lat, lng);
 
-      //icono_barrio = "https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png";
+
       amarker = new google.maps.Marker({
           position: latLngArr[i],
           map:map,
@@ -115,13 +115,6 @@
           });    
       amarker.setVisible(false);
 
-      if ('{{casos.sexo[loop.index]}}' == 1){
-        sex = 'male';
-      }
-      else if ('{{casos.sexo[loop.index]}}' == 0){
-        sex = 'female';
-      }
-
       google.maps.event.addListener(amarker, 'click', (function(amarker, i) {
          return function() {
              ainfowindow.setContent(     
@@ -129,10 +122,10 @@
               '<div id="siteNotice">' +
               "</div>" +
               '<div id="bodyContent">' +
-              "<p> Date: {{casos.fecha[loop.index]}} </p>" +
-              "<p> Time: {{joined_t.periodo_nombre[loop.index]}} </p>" +
-              "<p> Crime: {{joined_t.delitos_nombre[loop.index]}}</p>" +
-              "<p> Sex of the victim: " + sex + "</p>" +
+              "<p> Date: {{casos.fecha[loop.index-1]}} </p>" +
+              "<p> Time: {{casos.periodo_nombre[loop.index-1]}} </p>" +
+              "<p> Crime: {{casos.delitos_nombre[loop.index-1]}}</p>" +
+              "<p> Gender of the victim: " + ('{{casos.sexo[loop.index - 1]}}' == 1 ? 'male' : 'female') + "</p>" +
               "</div>" +
               "</div>");
              ainfowindow.open(map, amarker);
@@ -143,7 +136,6 @@
       markerArr.push(amarker);
       
       '{% endfor %}'
-
       return {
         markers:markerArr,
         window:ainfowindow
@@ -156,6 +148,7 @@
     
       const controlUI = document.createElement("div");
       controlUI.type = "form";
+      controlUI.id = "google_checks";
       controlUI.style.backgroundColor = "#fff";
       controlUI.style.border = "2px solid #fff";
       controlUI.style.borderRadius = "3px";
@@ -181,6 +174,9 @@
       label1.setAttribute("for", "radio");
       label1.innerHTML = "Register crime";
       controlUI.appendChild(label1);
+      
+      break1 = document.createElement("br");
+      controlUI.appendChild(break1);
     
       controlText1.onchange = function() {
         if (this.checked) {
@@ -204,6 +200,9 @@
       label2.setAttribute("for", "radio");
       label2.innerHTML = "See neighbourhood map";
       controlUI.appendChild(label2);
+
+      break2 = document.createElement("br");
+      controlUI.appendChild(break2);
     
       controlText2.onchange = function() {
         if (this.checked) {

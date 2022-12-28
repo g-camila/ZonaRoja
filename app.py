@@ -33,17 +33,14 @@ def after_request(response):
 
 @app.route("/", methods=["GET", "POST"])
 def map_2():
-    big_query = "SELECT * FROM casos"
-    casos = pd.read_sql(big_query, engine)
+    #big_query = "SELECT * FROM casos"
+    #casos = pd.read_sql(big_query, engine)
 
     d_query = "SELECT * FROM delitos"
     delitos = pd.read_sql(d_query, engine)
 
     p_query = "SELECT * FROM periodo"
     periodo = pd.read_sql(p_query, engine)
-
-    xx = "SELECT id_barrio, SUM(1) AS riesgo FROM casos GROUP BY id_barrio"
-    riesgo=pd.read_sql(xx, engine)
 
     #Request.
     if request.method == "POST":
@@ -58,17 +55,18 @@ def map_2():
         engine.execute(insertar)
 
 
+    xx = "SELECT id_barrio, SUM(1) AS riesgo FROM casos GROUP BY id_barrio"
+    riesgo=pd.read_sql(xx, engine)
     jriesgo = riesgo.to_json(orient = "records")
-    ammount = casos.shape[0]
 
-    yy = 'SELECT \
+    yy = 'SELECT casos.*, \
     casos.id AS casos_id, periodo.nombre AS periodo_nombre, delitos.nombre AS delitos_nombre \
     FROM casos JOIN periodo ON casos.periodo_id=periodo.id \
     JOIN delitos ON casos.delito_id=delitos.id'
     joined_tables=pd.read_sql(yy, engine)
+    ammount = joined_tables.shape[0]
 
-
-    return render_template("map_2.html", casos=casos, delitos=delitos, periodo=periodo, riesgo=jriesgo, am_casos=ammount, joined_t=joined_tables)
+    return render_template("map_2.html", casos=joined_tables, delitos=delitos, periodo=periodo, riesgo=jriesgo, am_casos=ammount)#, joined_t=joined_tables)
     #return redirect(request.referrer)
 if __name__=="__main__":
     #from waitress import serve
