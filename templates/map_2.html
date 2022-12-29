@@ -38,6 +38,7 @@
               <option value="{{delitos.id[2]}}">{{delitos.nombre[2]}}</option>
               <option value="{{delitos.id[3]}}">{{delitos.nombre[3]}}</option>
               <option value="{{delitos.id[4]}}">{{delitos.nombre[4]}}</option>
+              <option value="{{delitos.id[5]}}">{{delitos.nombre[5]}}</option>
             </select>
 
             <label for="start">Date </label>  
@@ -86,10 +87,11 @@
 
 {%block javascript%}
   <script type="text/javascript">
+    //global definition for map and ammount of cases registered in the table
     let map;
     let am_casos = '{{am_casos}}';
 
-    //agregar los markers de los casos ya registrados en markerArr[]
+    //add markers of cases in the databas
     function casos_marks(map){
       var i;
       let markerArr = [];
@@ -97,9 +99,10 @@
       var ainfowindow = new google.maps.InfoWindow;
       var input, lat, lng, parsedPosition, icon;
 
-      //loop en jinja para poder referenciar su index
+      //jinja loop to reference the index
       '{% for i in range(am_casos) %}'
       loc_string1 = '{{casos.lugar[loop.index - 1]}}';
+      //change string to a latlng object from google maps
       loc_string = loc_string1.substring(1, loc_string1.length-1);
       latlngStr = loc_string.split(",", 2);
       lat = parseFloat(latlngStr[0]);
@@ -114,7 +117,9 @@
             url: "http://maps.google.com/mapfiles/ms/micons/red-pushpin.png"}
           });    
       amarker.setVisible(false);
+      //the website for the icon is not marked as secure, might raise some flags depending on the browser
 
+      //displaying the infowindow of every marker
       google.maps.event.addListener(amarker, 'click', (function(amarker, i) {
          return function() {
              ainfowindow.setContent(     
@@ -143,9 +148,11 @@
     };
     
     
-    //The buttons to display the layers
+    //This function controls and creates two layers to be able to toggle between them
+    //This creates the divide between the map of the neighborhoods and every case marked
     function LayerControl(controlDiv, map, barrios, marker, markerArr, ainfowindow, binfoWindow) {
-    
+      
+      //Have to create the HTML for the buttons from javascript to avoid some flags
       const controlUI = document.createElement("div");
       controlUI.type = "form";
       controlUI.id = "google_checks";
@@ -164,6 +171,8 @@
       controlUI.style.paddingRight = "5px";
       controlDiv.appendChild(controlUI);
     
+
+      //The 'marker layer' button
       const controlText1 = document.createElement("input");
       controlText1.id = "markerLayer";
       controlText1.name = "layer"
@@ -177,7 +186,7 @@
       
       break1 = document.createElement("br");
       controlUI.appendChild(break1);
-    
+
       controlText1.onchange = function() {
         if (this.checked) {
           marker.setMap(map);
@@ -189,7 +198,8 @@
           ainfowindow.open(map);
         }
       };
-    
+
+      //The 'map layer' button
       const controlText2 = document.createElement("input");
       controlText2.id = "mapLayer";
       controlText2.name = "layer"
@@ -217,6 +227,7 @@
       };
     };
 
+    //barr_riesgo is the tbale that indicates how risky, how many cases, each neighborhood has
     let barr_riesgo = JSON.parse({{ riesgo|tojson }});
     
     //This function will run when the site is loaded
@@ -229,12 +240,14 @@
           center: Cordoba,
         });
 
+        //The barrios_id json file
         var barrios = new google.maps.Data()
         barrios.loadGeoJson("static/js/barrios_id.json");
         console.log(barrios);
+
         barrios.setStyle(function(feature){
           return{
-          //choose color according to id
+          //choose color according to the ammount of cases of every neighborhood
             fillColor: getColor(getRisk(feature.getProperty('id'))),
             fillOpacity: 0.7,
             strokeColor: getColor(getRisk(feature.getProperty('id'))),
@@ -245,7 +258,7 @@
 
         binfoWindow = new google.maps.InfoWindow();
 
-        //hacer forma de comparar y buscar el riesgo
+        //Each neighborhood can display its name and the ammount of cases
         barrios.addListener("click", function(e) {
           binfoWindow.setContent(
             '<div id="content">' +
@@ -272,14 +285,14 @@
           barrios.revertStyle();
         });
     
-        //initalize new marker
+        //initalize new marker, the one users will use to register each case
         let marker = new google.maps.Marker({
           position: Cordoba,
           map:map,
           });
         marker.setMap(null);
     
-        //set info window
+        //set info window with the corresponding button
         let contentString = '<div id="content">' +
         '<div id="siteNotice">' +
         "</div>" +
@@ -301,7 +314,6 @@
               content: contentString,
             });
     
-            //document.getElementById("map").style.cursor = "crosshair";
             position = event.latLng
             marker.setMap(map);
             marker.setPosition(position);
@@ -315,26 +327,30 @@
             });
     
             infowindow.open(map, marker);
+
+            //Send the marker's current coordinates to the html, to be able to save them later in my table with flask
             document.getElementById("coordenadas").value = position;
-    
+
+            //check what neighborhood's bounds (polygon figure) the marker is inside of
             b_contains = false;
             barrios.forEach(function(feature) {
               if (feature.getGeometry().getType() == "MultiPolygon") {
-                // simplifying assumption, depends on data
-                // just check first linear ring
-                //console.log(feature.getGeometry().getArray()[0].getAt(0).getArray())
+                // Get the bounds of the polygon, by setting a new one each time
                 var poly = new google.maps.Polygon({
                   paths: feature.getGeometry().getArray()[0].getAt(0).getArray()
-                  //path: feature.getGeometry().getAt(0).getArray()
                 });
+
+                //check if marker is inside of the current polygon's bounds
                 b_contains = b_contains || google.maps.geometry.poly.containsLocation(marker.getPosition(),poly)
                 if (google.maps.geometry.poly.containsLocation(marker.getPosition(),poly)) {
-                  // if inside polygon, create an infowindow with some information from the GeoJson
+                  // if inside polygon, send this information for display in the form
                   document.getElementById("barrio").value = feature.getProperty("Name");
                   document.getElementById("barrio_id").value = feature.getProperty("id");
                 }
               }
             })
+            //else, set the value to null, which will stop the form for submitting
+            //I only rgister cases that are inside of any neighborhood in Cordoba
             if (!(b_contains)){
               document.getElementById("barrio").value = "";
               document.getElementById("barrio_id").value = "";
@@ -342,7 +358,8 @@
             
           }
         });
-    
+      
+      //call the layercontrol function for it to work with all of the objects created
       object = casos_marks(map);
       const LayerControlDiv = document.createElement("div");
       LayerControl(LayerControlDiv, map, barrios, marker, object.markers, object.window, binfoWindow);
@@ -366,7 +383,7 @@
             colors[4];
       };
 
-      //se fija en el riesgo para cargar el color
+      //decide the risk of every neighborhood
       function getRisk(id){
         for (var i = 0; i < barr_riesgo.length; i++){
           if (id == barr_riesgo[i].id_barrio){
