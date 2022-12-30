@@ -1,3 +1,4 @@
+# Zona Roja
 URL: https://youtu.be/sxOKWBOot58 Final CS50 final project. A site for users to register crimes and view them in markers and in a colored map, all in Cordoba city. site link: https://zonaroja2.azurewebsites.net/
 
 It is all organized in templates and static folders for Flask to be able to access it all. The javascript and html happens all in one folder because I needed Flask to show up in my script, and thought it more practical to make it all into one. The database works with azure, the whole thing is built upon the google maps API.
